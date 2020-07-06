@@ -1,0 +1,93 @@
+<!--Embed the header.html template at this location-->
+{{ template "header.html" .}}
+
+<div class="container py-4">
+    {{ if .error }}
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="alert alert-danger">{{ .error }}</div>
+            </div>
+        </div>
+    {{ end }}
+
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <form class="form-signin" action="/consent" method="post">
+                    <div class="card-header">
+                        <h5 class="card-title">Authorize {{ .client.ClientName }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ .client.ClientName }} is requesting the following
+                            information</h6>
+                    </div>
+
+                    <div class="card-body">
+                        <p><strong>Review Permissions</strong></p>
+
+                        <div class="form-group">
+                            {{ range .requestedScopes }}
+                                <!-- There is no need to display the "openid" scope as it is essential to the -->
+                                <!-- OIDC protocol -->
+                                {{if not (eq .Scope "openid") }}
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" name="granted_scopes[]" value="{{ .Scope }}"
+                                               class="custom-control-input" id="{{ .Scope }}" {{if .Mandatory}}disabled
+                                               checked{{- end}}>
+                                        <label class="custom-control-label" for="{{ .Scope }}">{{ .Description }}</label>
+                                    </div>
+                                {{end}}
+                            {{ end }}
+                        </div>
+
+                        <input type="hidden" name="challenge" value="{{ .challenge }}">
+
+                        {{ if .client.PolicyURI }}
+                            <div class="form-group">
+                                <small class="form-text text-muted">
+                                    Accepting these permissions means that you allow this app to use your data as
+                                    specified
+                                    in their <a href=".client.TosURI">terms of service</a> and
+                                    <a href="{{ .client.PolicyURI }}">privacy statement</a>
+                                </small>
+                            </div>
+                        {{ end }}
+
+                        <div class="form-group mb-0">
+                            <p>You're logged in as: <a href="#">{{ .user }}</a></p>
+                        </div>
+
+                        <div class="form-group d-flex flex-wrap justify-content-between align-items-center mb-0">
+
+                            <div class="custom-control custom-checkbox mt-3">
+                                <input type="checkbox" name="remember" class="custom-control-input"
+                                       id="remember" value="true">
+                                <label class="custom-control-label" for="remember">Remember decision</label>
+                            </div>
+
+                            <div class="text-right mt-3">
+                                <button class="btn btn-md btn-success float-right px-4" id="accept"
+                                        name="consent_approved"
+                                        value="true" type="submit">Allow
+                                </button>
+                                <button class="btn btn-md btn-secondary float-right mr-2 px-4" id="deny"
+                                        name="consent_approved" value="false" type="submit">Deny
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col text-center">
+        <p class="mt-5 mb-3 text-muted">&copy; 2020 (Powered by <a href="https://gin-gonic.com/">gin-gonic</a>)</p>
+    </div>
+</div>
+
+</div>
+
+<!--Embed the footer.html template at this location-->
+{{ template "footer.html" .}}

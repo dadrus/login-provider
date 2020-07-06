@@ -1,0 +1,33 @@
+# log configures the logger
+log:
+  # level sets the log level, supports "panic", "fatal", "error", "warn", "info" and "debug". Defaults to "info".
+  level: debug
+
+
+# The port to listen on (defaults to 8080)
+port: 8080
+# The interface to listen and handle requests on (defaults to 127.0.0.1)
+host: 127.0.0.1
+
+# tls configures HTTPs (HTTP over TLS)
+tls:
+  # Key configures the private key (pem encoded)
+  key: /path/to/key.pem
+  # Cert configures the certificate (pem encoded)
+  cert: /path/to/cert.pem
+  # Configures the trust store (CA certificates to trust)
+  trust_store: /path/ot/ca.pem
+
+cookies:
+  # specify the SameSite mode that cookies should be sent with
+  same_site_mode: Lax
+
+# Where the hydra admin service is located
+hydra_admin_url: http://127.0.0.1:4445
+
+# Where to send the user for registration purposes
+register_url: http://127.0.0.1:8090/register
+
+# Where to verify the credentials provided by the user
+authenticate_url: http://127.0.0.1:8090/authenticate
+

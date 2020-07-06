@@ -1,0 +1,82 @@
+<!--Embed the header.html template at this location-->
+{{ template "header.html" .}}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col text-center">
+            <img class="mb-4" src="https://getbootstrap.com/docs/4.0/assets/brand/bootstrap-solid.svg"
+                 alt=""
+                 width="72"
+                 height="72">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 offset-md-4">
+            <div class="card">
+                <form class="form-signin" action="/login" method="post">
+                    <div class="card-body">
+                        <h5 class="card-title"><b>Please sign in</b></h5><br>
+                        <div class="form-row">
+                            <div class="form-group col">
+                                {{ if .error }}
+                                    <input type="email" name="email" class="form-control is-invalid" placeholder="Email address"
+                                           required
+                                           autofocus>
+                                {{ else }}
+                                    <input type="email" name="email" class="form-control" placeholder="Email address" required
+                                           autofocus>
+                                {{ end }}
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col">
+                                {{ if .error }}
+                                    <input type="password" name="password" class="form-control is-invalid"
+                                           placeholder="Password" required>
+                                    <div class="invalid-feedback">
+                                        {{ .error }}
+                                    </div>
+                                {{ else }}
+                                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                                {{ end }}
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="remember" class="custom-control-input"
+                                           id="remember" value="true">
+                                    <label class="custom-control-label" for="remember">Remember me</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="challenge" value="{{ .challenge }}">
+                        <button class="btn btn-medium btn-success btn-block" type="submit">Sign in</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col col-md-4 offset-md-4">
+            <hr>
+            <p class="text-center">New here?</p>
+            <a class="btn btn-medium btn-secondary btn-block" href="{{ .register_url }}" role="button">Sign up</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col text-center">
+            <p class="mt-5 mb-3 text-muted">&copy; 2020 (Powered by <a href="https://gin-gonic.com/">gin-gonic</a>)</p>
+        </div>
+    </div>
+
+</div>
+
+<!--Embed the footer.html template at this location-->
+{{ template "footer.html" .}}
