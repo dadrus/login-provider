@@ -1,31 +1,70 @@
 package hydra
 
 import (
+	"fmt"
+	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/ory/hydra-client-go/client"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+	"login-provider/internal/config"
 	"net/url"
 )
 
 type ClientFactory struct {
-	adminUrl *url.URL
+	transport *httptransport.Runtime
 }
 
-func NewClientFactory(adminUrl string) *ClientFactory {
-	adminURL, err := url.Parse(adminUrl)
+func NewClientFactory(adminUrl string) (*ClientFactory, error) {
+	url, err := url.Parse(adminUrl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &ClientFactory{
-		adminUrl: adminURL,
+	factory := &ClientFactory{}
+
+	caFile := viper.GetString(config.TlsTrustStoreFile)
+	if caFile == "" {
+		log.Info().Msg("No explicit trust store configured. Falling back to a system-wide one")
+		// if a specific trust store is not specified, we'll rely on the system-wide trust store
+		factory.transport = httptransport.New(url.Host, url.Path, []string{url.Scheme})
+	} else {
+		log.Info().Msg("Explicit trust store configured. Using it")
+		// if a specific trust store has been specified use it instead fo the the system wide one
+		tlsClient, err := httptransport.TLSClient(httptransport.TLSClientOptions{
+			CA: caFile,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		factory.transport = httptransport.NewWithClient(url.Host, url.Path, []string{url.Scheme}, tlsClient)
 	}
+
+	factory.transport.SetLogger(ZeroLogLogger{})
+	factory.transport.SetDebug(viper.GetString(config.LogLevel) == "debug")
+
+	return factory, nil
 }
 
-func (h *ClientFactory) NewClient() *client.OryHydra {
-	// TODO: configure the trust store to be used. Without the system wide trust store will be used
-	// this is not what we want
+func (cf *ClientFactory) NewClient() *client.OryHydra {
+	return client.New(cf.transport, nil)
+}
 
-	// TODO: configure hydra logger to the level this application is configured to use
+type ZeroLogLogger struct{}
 
-	return client.NewHTTPClientWithConfig(nil, &client.TransportConfig{
-		Schemes: []string{h.adminUrl.Scheme}, Host: h.adminUrl.Host, BasePath: h.adminUrl.Path})
+func (ZeroLogLogger) Printf(format string, args ...interface{}) {
+	if len(format) == 0 || format[len(format)-1] != '\n' {
+		format += "\n"
+	}
+
+	log.Info().Msg(fmt.Sprintf(format, args))
+}
+
+func (ZeroLogLogger) Debugf(format string, args ...interface{}) {
+	if len(format) == 0 || format[len(format)-1] != '\n' {
+		format += "\n"
+	}
+
+	log.Debug().Msg(fmt.Sprintf(format, args))
 }
