@@ -21,7 +21,11 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
-	hf := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl))
+	hf, err := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl))
+	if err != nil {
+		l := log.With().Err(err).Logger()
+		l.Fatal().Msg("Failed to create hydra client factory")
+	}
 
 	router.GET("/login", handler.ShowLoginPage(hf))
 	router.POST("/login", handler.Login(hf))
