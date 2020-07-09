@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -16,8 +17,9 @@ import (
 
 func Serve(cmd *cobra.Command, args []string) {
 	router := gin.New()
-	router.Use(logger())
 	router.Use(gin.Recovery())
+	router.Use(correlationIdFilter())
+	router.Use(logger())
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
@@ -55,10 +57,19 @@ func logger() gin.HandlerFunc {
 		}
 
 		l := log.Logger.With().
-			Str("host", c.Request.Host).
-			Str("_method", c.Request.Method).
-			Str("_path", path).
-			Str("_user_agent", c.Request.UserAgent()).
+			Str("_ops_tx_method", c.Request.Method).
+			Str("_ops_tx_scheme", c.Request.URL.Scheme).
+			Str("_ops_tx_object", path).
+			Str("_ops_tx_user_agent", c.Request.UserAgent()).
+			Str("_ops_correlation_id", c.Request.Header.Get("Correlation-Id")).
+			Str("_ops_tx_x_forwarded_host", c.Request.Header.Get("X-Forwarded-Host")).
+			Str("_ops_tx_x_forwarded_for", c.Request.Header.Get("X-Forwarded-For")).
+			Str("_ops_tx_x_forwarded_port", c.Request.Header.Get("X-Forwarded-Port")).
+			Str("_ops_tx_x_forwarded_proto", c.Request.Header.Get("X-Forwarded-Proto")).
+			Str("_ops_tx_x_request_id", c.Request.Header.Get("X-Exchange-Id")).
+			Str("_ops_tx_x_amz_cf_id", c.Request.Header.Get("X-Amz-Cf-Id")).
+			Str("_ops_tx_dcid", c.Request.Header.Get("X-Dcid")).
+			Int64("_ops_tx_start", start.Unix()).
 			Logger()
 
 		c.Set("logger", l)
@@ -69,13 +80,17 @@ func logger() gin.HandlerFunc {
 		latency := end.Sub(start)
 		end = end.UTC()
 
-		msg := "Request"
+		msg := "Processed transaction"
 		if len(c.Errors) > 0 {
 			msg = c.Errors.String()
 		}
 
 		l = l.With().
+			Str("_ops_message", "tx").
+			Str("_ops_caller", c.Request.RemoteAddr).
+			Bool("_ops_tx_ok", c.Writer.Status() < 500).
 			Int("_ops_tx_result_code", c.Writer.Status()).
+			Int("_ops_tx_body_bytes_sent", c.Writer.Size()).
 			Dur("_opx_tx_duration", latency).
 			Logger()
 
@@ -88,6 +103,20 @@ func logger() gin.HandlerFunc {
 			l.Info().Msg(msg)
 		}
 
+	}
+}
+
+func correlationIdFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		correlationId := c.Request.Header.Get("Correlation-Id")
+		if correlationId == "" {
+			correlationId = uuid.New().String()
+			c.Request.Header.Set("Correlation-Id", correlationId)
+		}
+
+		c.Next()
+
+		c.Writer.Header().Set("Correlation-Id", correlationId)
 	}
 }
 

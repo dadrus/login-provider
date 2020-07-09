@@ -87,8 +87,15 @@ func configureLogging() {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+		fmt.Println("Failed to retrieve the hostname: " + err.Error())
+	}
+
 	log.Logger = zerolog.New(os.Stdout).With().
 		Str("version", "1.1").
+		Str("host", hostname).
 		Timestamp().
 		Caller().
 		Logger().Hook(zerolog.HookFunc(LevelHook))
