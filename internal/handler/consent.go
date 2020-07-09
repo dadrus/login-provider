@@ -6,6 +6,7 @@ import (
 	"github.com/ory/hydra-client-go/models"
 	"github.com/rs/zerolog/log"
 	"login-provider/internal/client_meta"
+	"login-provider/internal/hydra"
 	"login-provider/internal/profile_api"
 	"net/http"
 	"time"
@@ -18,7 +19,7 @@ type consentForm struct {
 	ConsentApproved bool     `form:"consent_approved"`
 }
 
-func ShowConsentPage(hf *HydraClientFactory) gin.HandlerFunc {
+func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var consentChallenge string
 
@@ -29,9 +30,9 @@ func ShowConsentPage(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		hydra := hf.newClient()
+		client := hf.NewClient()
 
-		response, err := hydra.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
+		response, err := client.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
 			WithConsentChallenge(consentChallenge))
 		if err != nil {
 			log.Err(err).Msg("Error while communicating with hydra to get consent request")
@@ -53,7 +54,7 @@ func ShowConsentPage(hf *HydraClientFactory) gin.HandlerFunc {
 
 		if response.Payload.Skip || !info.AskConsent {
 			// grant login request
-			response, err := hydra.Admin.AcceptConsentRequest(
+			response, err := client.Admin.AcceptConsentRequest(
 				admin.NewAcceptConsentRequestParams().
 					WithConsentChallenge(consentChallenge).
 					WithBody(&models.AcceptConsentRequest{
@@ -92,7 +93,7 @@ func ShowConsentPage(hf *HydraClientFactory) gin.HandlerFunc {
 	}
 }
 
-func Consent(hf *HydraClientFactory) gin.HandlerFunc {
+func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var consentData consentForm
 		if err := c.ShouldBind(&consentData); err != nil {
@@ -101,10 +102,10 @@ func Consent(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		hydra := hf.newClient()
+		client := hf.NewClient()
 
 		if !consentData.ConsentApproved {
-			response, err := hydra.Admin.RejectConsentRequest(admin.NewRejectConsentRequestParams().
+			response, err := client.Admin.RejectConsentRequest(admin.NewRejectConsentRequestParams().
 				WithConsentChallenge(consentData.Challenge).
 				WithBody(&models.RejectRequest{
 					Error:     "User rejected consent",
@@ -122,7 +123,7 @@ func Consent(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		gcr, err := hydra.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
+		gcr, err := client.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
 			WithConsentChallenge(consentData.Challenge))
 		if err != nil {
 			log.Err(err).Msg("Error while communicating with hydra to get consent request")
@@ -140,7 +141,7 @@ func Consent(hf *HydraClientFactory) gin.HandlerFunc {
 
 		grantedScopes := append(consentData.GrantedScopes, cmi.MandatoryScopes...)
 
-		acr, err := hydra.Admin.AcceptConsentRequest(
+		acr, err := client.Admin.AcceptConsentRequest(
 			admin.NewAcceptConsentRequestParams().
 				WithConsentChallenge(consentData.Challenge).
 				WithBody(&models.AcceptConsentRequest{

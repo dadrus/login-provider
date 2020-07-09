@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"login-provider/internal/config"
+	"login-provider/internal/hydra"
 	"login-provider/internal/profile_api"
 	"net/http"
 	"net/url"
@@ -20,7 +21,7 @@ type loginForm struct {
 	Remember  bool   `form:"remember"`
 }
 
-func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
+func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log := c.MustGet("logger").(zerolog.Logger)
 
@@ -36,9 +37,9 @@ func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
 
 		errorMessage := c.Query("error")
 
-		hydra := hf.newClient()
+		client := hf.NewClient()
 		// get info about the login request for the given challenge
-		response, err := hydra.Admin.GetLoginRequest(admin.NewGetLoginRequestParams().
+		response, err := client.Admin.GetLoginRequest(admin.NewGetLoginRequestParams().
 			WithLoginChallenge(loginChallenge))
 		if err != nil {
 			log.Err(err).Msg("Error while communicating with hydra to get new login request")
@@ -54,7 +55,7 @@ func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
 			log.Debug().Msg("User authentication skipped")
 
 			// grant login request
-			response, err := hydra.Admin.AcceptLoginRequest(
+			response, err := client.Admin.AcceptLoginRequest(
 				admin.NewAcceptLoginRequestParams().
 					WithLoginChallenge(loginChallenge).
 					WithBody(&models.AcceptLoginRequest{Subject: &response.Payload.Subject}))
@@ -80,7 +81,7 @@ func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
 	}
 }
 
-func Login(hf *HydraClientFactory) gin.HandlerFunc {
+func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log := c.MustGet("logger").(zerolog.Logger)
 
@@ -91,7 +92,7 @@ func Login(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		hydra := hf.newClient()
+		client := hf.NewClient()
 		authResponse, err := profile_api.AuthenticateUser(viper.GetString(config.AuthenticateUrl), loginData.Email, loginData.Password)
 		if err != nil {
 			params := url.Values{}
@@ -104,7 +105,7 @@ func Login(hf *HydraClientFactory) gin.HandlerFunc {
 		subjectId := strconv.Itoa(authResponse.User.ID)
 
 		// login successful
-		response, err := hydra.Admin.AcceptLoginRequest(admin.NewAcceptLoginRequestParams().
+		response, err := client.Admin.AcceptLoginRequest(admin.NewAcceptLoginRequestParams().
 			WithLoginChallenge(loginData.Challenge).
 			WithBody(&models.AcceptLoginRequest{
 				Acr:         "0",

@@ -72,7 +72,7 @@ func configureLogging() {
 	zerolog.ErrorFieldName = "full_message"
 	zerolog.CallerFieldName = "_caller"
 
-	switch viper.GetString("log.level") {
+	switch viper.GetString(config.LogLevel) {
 	case "panic":
 		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	case "fatal":
@@ -89,7 +89,8 @@ func configureLogging() {
 
 	log.Logger = zerolog.New(os.Stdout).With().
 		Str("version", "1.1").
-		Timestamp().Caller().
+		Timestamp().
+		Caller().
 		Logger().Hook(zerolog.HookFunc(LevelHook))
 }
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ory/hydra-client-go/client/admin"
+	"login-provider/internal/hydra"
 	"net/http"
 )
 
@@ -11,7 +12,7 @@ type logoutForm struct {
 	LogoutApproved bool   `form:"logout_approved"`
 }
 
-func ShowLogoutPage(h *HydraClientFactory) gin.HandlerFunc {
+func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var logoutChallenge string
 		// the challenge is used to fetch information about consent requests in hydra
@@ -20,8 +21,8 @@ func ShowLogoutPage(h *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		hydra := h.newClient()
-		_, err := hydra.Admin.GetLogoutRequest(admin.NewGetLogoutRequestParams().
+		client := h.NewClient()
+		_, err := client.Admin.GetLogoutRequest(admin.NewGetLogoutRequestParams().
 			WithLogoutChallenge(logoutChallenge))
 		if err != nil {
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
@@ -37,7 +38,7 @@ func ShowLogoutPage(h *HydraClientFactory) gin.HandlerFunc {
 	}
 }
 
-func Logout(hf *HydraClientFactory) gin.HandlerFunc {
+func Logout(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var logoutData logoutForm
 		if err := c.ShouldBind(&logoutData); err != nil {
@@ -45,10 +46,10 @@ func Logout(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		hydra := hf.newClient()
+		client := hf.NewClient()
 
 		if !logoutData.LogoutApproved {
-			_, err := hydra.Admin.RejectLogoutRequest(admin.NewRejectLogoutRequestParams().
+			_, err := client.Admin.RejectLogoutRequest(admin.NewRejectLogoutRequestParams().
 				WithLogoutChallenge(logoutData.Challenge))
 			if err != nil {
 				// TODO: This is an internal error (hydra not available, the request is malformed, etc)
@@ -62,7 +63,7 @@ func Logout(hf *HydraClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		response, err := hydra.Admin.AcceptLogoutRequest(admin.NewAcceptLogoutRequestParams().
+		response, err := client.Admin.AcceptLogoutRequest(admin.NewAcceptLogoutRequestParams().
 			WithLogoutChallenge(logoutData.Challenge))
 		if err != nil {
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)

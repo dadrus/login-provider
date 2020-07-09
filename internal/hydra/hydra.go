@@ -1,26 +1,26 @@
-package handler
+package hydra
 
 import (
 	"github.com/ory/hydra-client-go/client"
 	"net/url"
 )
 
-type HydraClientFactory struct {
+type ClientFactory struct {
 	adminUrl *url.URL
 }
 
-func NewHydraClientFactory(adminUrl string) *HydraClientFactory {
+func NewClientFactory(adminUrl string) *ClientFactory {
 	adminURL, err := url.Parse(adminUrl)
 	if err != nil {
 		panic(err)
 	}
 
-	return &HydraClientFactory{
+	return &ClientFactory{
 		adminUrl: adminURL,
 	}
 }
 
-func (h *HydraClientFactory) newClient() *client.OryHydra {
+func (h *ClientFactory) NewClient() *client.OryHydra {
 	// TODO: configure the trust store to be used. Without the system wide trust store will be used
 	// this is not what we want
 

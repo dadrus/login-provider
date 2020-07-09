@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"login-provider/internal/handler"
+	"login-provider/internal/hydra"
 	"net/http"
 	"os"
 	"time"
@@ -20,7 +21,7 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
-	hf := handler.NewHydraClientFactory(viper.GetString(config.HydraAdminUrl))
+	hf := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl))
 
 	router.GET("/login", handler.ShowLoginPage(hf))
 	router.POST("/login", handler.Login(hf))
