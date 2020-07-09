@@ -1,4 +1,4 @@
-package view
+package handler
 
 import (
 	"github.com/ory/hydra-client-go/client"

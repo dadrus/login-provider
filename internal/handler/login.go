@@ -1,10 +1,10 @@
-package view
+package handler
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/ory/hydra-client-go/models"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"login-provider/internal/profile_api"
@@ -22,6 +22,9 @@ type loginForm struct {
 
 func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log := c.MustGet("logger").(zerolog.Logger)
+
+		log.Debug().Msg("Showing login page")
 		var loginChallenge string
 
 		// the challenge is used to fetch information about login requests in hydra
@@ -79,6 +82,8 @@ func ShowLoginPage(hf *HydraClientFactory) gin.HandlerFunc {
 
 func Login(hf *HydraClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log := c.MustGet("logger").(zerolog.Logger)
+
 		var loginData loginForm
 		if err := c.ShouldBind(&loginData); err != nil {
 			log.Err(err).Msg("Failed to parse data from submitted login form")
