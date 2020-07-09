@@ -95,6 +95,8 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 		client := hf.NewClient()
 		authResponse, err := profile_api.AuthenticateUser(viper.GetString(config.AuthenticateUrl), loginData.Email, loginData.Password)
 		if err != nil {
+			l := log.With().Err(err).Logger()
+			l.Warn().Msg("User authentication failed")
 			params := url.Values{}
 			params.Add("login_challenge", loginData.Challenge)
 			params.Add("error", "Invalid user name or password")
