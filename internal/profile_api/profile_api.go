@@ -84,6 +84,9 @@ func (ar *AuthenticationResponse) Unmarshal(data interface{}) error {
 	return mapstructure.Decode(data, ar)
 }
 
+// TODO: follow the pattern from https://blog.golang.org/context to pass inbound-outbound
+// specific values. This way we're able to have better logging as well as passing aound
+// required tracing information, like X-Request-Id
 func AuthenticateUser(url string, userName, password string) (*AuthenticationResponse, error) {
 	jsonValue, _ := json.Marshal(AuthenticationRequest{UserName: userName, Password: password})
 
