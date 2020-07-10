@@ -14,6 +14,8 @@ import (
 	"strconv"
 )
 
+// TODO annotate the handlers for generating OpenAPI spec out of it, e.g. by using https://github.com/go-swagger/go-swagger
+
 type loginForm struct {
 	Challenge string `form:"challenge" binding:"required"`
 	Email     string `form:"email" binding:"required"`
