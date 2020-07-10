@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/ory/hydra-client-go/models"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"login-provider/internal/hydra"
@@ -23,14 +23,14 @@ type loginForm struct {
 
 func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log := c.MustGet("logger").(zerolog.Logger)
+		logger := log.Ctx(c.Request.Context())
 
-		log.Debug().Msg("Showing login page")
+		logger.Debug().Msg("Showing login page")
 		var loginChallenge string
 
 		// the challenge is used to fetch information about login requests in hydra
 		if loginChallenge = c.Query("login_challenge"); len(loginChallenge) == 0 {
-			log.Warn().Msg("No login challenge provided")
+			logger.Warn().Msg("No login challenge provided")
 			HandleBadRequest(c)
 			return
 		}
@@ -42,7 +42,7 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 		response, err := client.Admin.GetLoginRequest(admin.NewGetLoginRequestParams().
 			WithLoginChallenge(loginChallenge))
 		if err != nil {
-			log.Err(err).Msg("Error while communicating with hydra to get new login request")
+			logger.Err(err).Msg("Error while communicating with hydra to get new login request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			HandleBadRequest(c)
@@ -52,7 +52,7 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 		// if hydra was already able to authenticate the user, Skip will be true
 		// and we don't need to authenticate the user again
 		if response.Payload.Skip {
-			log.Debug().Msg("User authentication skipped")
+			logger.Debug().Msg("User authentication skipped")
 
 			// grant login request
 			response, err := client.Admin.AcceptLoginRequest(
@@ -60,7 +60,7 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 					WithLoginChallenge(loginChallenge).
 					WithBody(&models.AcceptLoginRequest{Subject: &response.Payload.Subject}))
 			if err != nil {
-				log.Err(err).Msg("Error while communicating with hydra to accept login request")
+				logger.Err(err).Msg("Error while communicating with hydra to accept login request")
 				// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 				// So we have to redirect to "something went wrong page - please contact the admin"
 				HandleBadRequest(c)
@@ -83,11 +83,11 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 
 func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log := c.MustGet("logger").(zerolog.Logger)
+		logger := log.Ctx(c.Request.Context())
 
 		var loginData loginForm
 		if err := c.ShouldBind(&loginData); err != nil {
-			log.Err(err).Msg("Failed to parse data from submitted login form")
+			logger.Err(err).Msg("Failed to parse data from submitted login form")
 			c.HTML(http.StatusBadRequest, "login.html", gin.H{"title": "Login", "register_url": viper.GetString(config.RegisterUrl)})
 			return
 		}
@@ -95,7 +95,7 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 		client := hf.NewClient(c)
 		authResponse, err := profile_api.AuthenticateUser(viper.GetString(config.AuthenticateUrl), loginData.Email, loginData.Password)
 		if err != nil {
-			l := log.With().Err(err).Logger()
+			l := logger.With().Err(err).Logger()
 			l.Warn().Msg("User authentication failed")
 			params := url.Values{}
 			params.Add("login_challenge", loginData.Challenge)
@@ -117,7 +117,7 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 				Subject:     &subjectId,
 			}))
 		if err != nil {
-			log.Err(err).Msg("Error while communicating with hydra to accept login request")
+			logger.Err(err).Msg("Error while communicating with hydra to accept login request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest,

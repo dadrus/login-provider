@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ory/hydra-client-go/client/admin"
+	"github.com/rs/zerolog/log"
 	"login-provider/internal/hydra"
 	"net/http"
 )
@@ -14,6 +15,8 @@ type logoutForm struct {
 
 func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger := log.Ctx(c.Request.Context())
+
 		var logoutChallenge string
 		// the challenge is used to fetch information about consent requests in hydra
 		if logoutChallenge = c.Query("logout_challenge"); len(logoutChallenge) == 0 {
@@ -25,6 +28,7 @@ func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
 		_, err := client.Admin.GetLogoutRequest(admin.NewGetLogoutRequestParams().
 			WithLogoutChallenge(logoutChallenge))
 		if err != nil {
+			logger.Err(err).Msg("Error while communicating with hydra to get logout request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest, "logout.html", gin.H{"title": "Logout"})
@@ -40,8 +44,11 @@ func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
 
 func Logout(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger := log.Ctx(c.Request.Context())
+
 		var logoutData logoutForm
 		if err := c.ShouldBind(&logoutData); err != nil {
+			logger.Err(err).Msg("Failed to parse data from submitted logout form")
 			c.HTML(http.StatusBadRequest, "logout.html", gin.H{"title": "Logout"})
 			return
 		}
@@ -52,6 +59,7 @@ func Logout(hf *hydra.ClientFactory) gin.HandlerFunc {
 			_, err := client.Admin.RejectLogoutRequest(admin.NewRejectLogoutRequestParams().
 				WithLogoutChallenge(logoutData.Challenge))
 			if err != nil {
+				logger.Err(err).Msg("Error while communicating with hydra to reject logout request")
 				// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 				// So we have to redirect to "something went wrong page - please contact the admin"
 				c.HTML(http.StatusBadRequest, "logout.html", gin.H{"title": "Logout"})
@@ -66,6 +74,7 @@ func Logout(hf *hydra.ClientFactory) gin.HandlerFunc {
 		response, err := client.Admin.AcceptLogoutRequest(admin.NewAcceptLogoutRequestParams().
 			WithLogoutChallenge(logoutData.Challenge))
 		if err != nil {
+			logger.Err(err).Msg("Error while communicating with hydra to accept logout request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest, "logout.html", gin.H{"title": "Logout"})

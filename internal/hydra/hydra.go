@@ -49,13 +49,13 @@ func NewClientFactory(adminUrl string) (*ClientFactory, error) {
 }
 
 func (cf *ClientFactory) NewClient(c *gin.Context) *client.OryHydra {
-	log := c.MustGet("logger").(zerolog.Logger)
-	cf.transport.SetLogger(ZeroLogLogger{log})
+	logger := log.Ctx(c.Request.Context())
+	cf.transport.SetLogger(ZeroLogLogger{logger})
 	return client.New(cf.transport, nil)
 }
 
 type ZeroLogLogger struct{
-	logger zerolog.Logger
+	logger *zerolog.Logger
 }
 
 func (l ZeroLogLogger) Printf(format string, args ...interface{}) {

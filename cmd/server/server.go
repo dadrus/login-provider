@@ -17,8 +17,9 @@ import (
 func Serve(cmd *cobra.Command, args []string) {
 	router := gin.New()
 	router.Use(gin.Recovery())
-	router.Use(correlationIdFilter())
-	router.Use(logger())
+	router.Use(correlationIdMiddleware())
+	router.Use(requestIdMiddleware())
+	router.Use(loggerMiddleware())
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
@@ -48,7 +49,7 @@ func Serve(cmd *cobra.Command, args []string) {
 	}
 }
 
-func logger() gin.HandlerFunc {
+func loggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -57,11 +58,13 @@ func logger() gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		l := log.Logger.With().
+		l := log.With().
 			Str("_ops_correlation_id", c.Request.Header.Get("Correlation-Id")).
+			Str("_http_x_request_id", c.Request.Header.Get("X-Request-Id")).
 			Logger()
 
-		c.Set("logger", l)
+		newCtx := l.WithContext(c.Request.Context())
+		c.Request = c.Request.WithContext(newCtx)
 
 		c.Next()
 
@@ -89,7 +92,7 @@ func logger() gin.HandlerFunc {
 	}
 }
 
-func correlationIdFilter() gin.HandlerFunc {
+func correlationIdMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		correlationId := c.Request.Header.Get("Correlation-Id")
 		if correlationId == "" {
@@ -100,6 +103,19 @@ func correlationIdFilter() gin.HandlerFunc {
 		c.Next()
 
 		c.Writer.Header().Set("Correlation-Id", correlationId)
+	}
+}
+
+func requestIdMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		gotRequestId := c.Request.Header.Get("X-Request-Id")
+		requestId := "login-provider:" + uuid.New().String()
+		if len(gotRequestId) != 0 {
+			requestId = gotRequestId + ";" + requestId
+		}
+		c.Request.Header.Set("X-Request-Id", requestId)
+
+		c.Next()
 	}
 }
 

@@ -21,11 +21,12 @@ type consentForm struct {
 
 func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var consentChallenge string
+		logger := log.Ctx(c.Request.Context())
 
+		var consentChallenge string
 		// the challenge is used to fetch information about consent requests in hydra
 		if consentChallenge = c.Query("consent_challenge"); len(consentChallenge) == 0 {
-			log.Warn().Msg("No consent challenge provided")
+			logger.Warn().Msg("No consent challenge provided")
 			HandleBadRequest(c)
 			return
 		}
@@ -35,7 +36,7 @@ func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 		response, err := client.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
 			WithConsentChallenge(consentChallenge))
 		if err != nil {
-			log.Err(err).Msg("Error while communicating with hydra to get consent request")
+			logger.Err(err).Msg("Error while communicating with hydra to get consent request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
@@ -68,7 +69,7 @@ func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 					}))
 
 			if err != nil {
-				log.Err(err).Msg("Error while communicating with hydra to accept consent request")
+				logger.Err(err).Msg("Error while communicating with hydra to accept consent request")
 				// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 				// So we have to redirect to "something went wrong page - please contact the admin"
 				c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
@@ -95,9 +96,11 @@ func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 
 func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger := log.Ctx(c.Request.Context())
+
 		var consentData consentForm
 		if err := c.ShouldBind(&consentData); err != nil {
-			log.Err(err).Msg("Failed to parse data from submitted consent form")
+			logger.Err(err).Msg("Failed to parse data from submitted consent form")
 			c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
 			return
 		}
@@ -112,7 +115,7 @@ func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
 					ErrorHint: "consent_rejected",
 				}))
 			if err != nil {
-				log.Err(err).Msg("Error while communicating with hydra to reject consent request")
+				logger.Err(err).Msg("Error while communicating with hydra to reject consent request")
 				// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 				// So we have to redirect to "something went wrong page - please contact the admin"
 				c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
@@ -126,7 +129,7 @@ func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
 		gcr, err := client.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
 			WithConsentChallenge(consentData.Challenge))
 		if err != nil {
-			log.Err(err).Msg("Error while communicating with hydra to get consent request")
+			logger.Err(err).Msg("Error while communicating with hydra to get consent request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
@@ -155,6 +158,7 @@ func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
 					},
 				}))
 		if err != nil {
+			logger.Err(err).Msg("Error while communicating with hydra to accept consent request")
 			// TODO: This is an internal error (hydra not available, the request is malformed, etc)
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest, "consent.html", gin.H{"title": "Consent"})
