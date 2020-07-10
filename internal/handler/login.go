@@ -37,7 +37,7 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 
 		errorMessage := c.Query("error")
 
-		client := hf.NewClient()
+		client := hf.NewClient(c)
 		// get info about the login request for the given challenge
 		response, err := client.Admin.GetLoginRequest(admin.NewGetLoginRequestParams().
 			WithLoginChallenge(loginChallenge))
@@ -92,7 +92,7 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 			return
 		}
 
-		client := hf.NewClient()
+		client := hf.NewClient(c)
 		authResponse, err := profile_api.AuthenticateUser(viper.GetString(config.AuthenticateUrl), loginData.Email, loginData.Password)
 		if err != nil {
 			l := log.With().Err(err).Logger()

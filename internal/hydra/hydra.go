@@ -2,8 +2,10 @@ package hydra
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/ory/hydra-client-go/client"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"login-provider/internal/config"
@@ -41,30 +43,33 @@ func NewClientFactory(adminUrl string) (*ClientFactory, error) {
 		factory.transport = httptransport.NewWithClient(url.Host, url.Path, []string{url.Scheme}, tlsClient)
 	}
 
-	factory.transport.SetLogger(ZeroLogLogger{})
 	factory.transport.SetDebug(viper.GetString(config.LogLevel) == "debug")
 
 	return factory, nil
 }
 
-func (cf *ClientFactory) NewClient() *client.OryHydra {
+func (cf *ClientFactory) NewClient(c *gin.Context) *client.OryHydra {
+	log := c.MustGet("logger").(zerolog.Logger)
+	cf.transport.SetLogger(ZeroLogLogger{log})
 	return client.New(cf.transport, nil)
 }
 
-type ZeroLogLogger struct{}
-
-func (ZeroLogLogger) Printf(format string, args ...interface{}) {
-	if len(format) == 0 || format[len(format)-1] != '\n' {
-		format += "\n"
-	}
-
-	log.Info().Msg(fmt.Sprintf(format, args))
+type ZeroLogLogger struct{
+	logger zerolog.Logger
 }
 
-func (ZeroLogLogger) Debugf(format string, args ...interface{}) {
+func (l ZeroLogLogger) Printf(format string, args ...interface{}) {
 	if len(format) == 0 || format[len(format)-1] != '\n' {
 		format += "\n"
 	}
 
-	log.Debug().Msg(fmt.Sprintf(format, args))
+	l.logger.Info().Msg(fmt.Sprintf(format, args))
+}
+
+func (l ZeroLogLogger) Debugf(format string, args ...interface{}) {
+	if len(format) == 0 || format[len(format)-1] != '\n' {
+		format += "\n"
+	}
+
+	l.logger.Debug().Msg(fmt.Sprintf(format, args))
 }

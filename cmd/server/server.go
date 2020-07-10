@@ -10,7 +10,6 @@ import (
 	"login-provider/internal/config"
 	"login-provider/internal/handler"
 	"login-provider/internal/hydra"
-	"net/http"
 	"os"
 	"time"
 )
@@ -57,19 +56,7 @@ func logger() gin.HandlerFunc {
 		}
 
 		l := log.Logger.With().
-			Str("_ops_tx_method", c.Request.Method).
-			Str("_ops_tx_scheme", c.Request.URL.Scheme).
-			Str("_ops_tx_object", path).
-			Str("_ops_tx_user_agent", c.Request.UserAgent()).
 			Str("_ops_correlation_id", c.Request.Header.Get("Correlation-Id")).
-			Str("_ops_tx_x_forwarded_host", c.Request.Header.Get("X-Forwarded-Host")).
-			Str("_ops_tx_x_forwarded_for", c.Request.Header.Get("X-Forwarded-For")).
-			Str("_ops_tx_x_forwarded_port", c.Request.Header.Get("X-Forwarded-Port")).
-			Str("_ops_tx_x_forwarded_proto", c.Request.Header.Get("X-Forwarded-Proto")).
-			Str("_ops_tx_x_request_id", c.Request.Header.Get("X-Exchange-Id")).
-			Str("_ops_tx_x_amz_cf_id", c.Request.Header.Get("X-Amz-Cf-Id")).
-			Str("_ops_tx_dcid", c.Request.Header.Get("X-Dcid")).
-			Int64("_ops_tx_start", start.Unix()).
 			Logger()
 
 		c.Set("logger", l)
@@ -80,29 +67,23 @@ func logger() gin.HandlerFunc {
 		latency := end.Sub(start)
 		end = end.UTC()
 
-		msg := "Processed transaction"
-		if len(c.Errors) > 0 {
-			msg = c.Errors.String()
-		}
-
-		l = l.With().
-			Str("_ops_message", "tx").
+		l.Info().
 			Str("_ops_caller", c.Request.RemoteAddr).
-			Bool("_ops_tx_ok", c.Writer.Status() < 500).
+			Str("_ops_tx_method", c.Request.Method).
+			Str("_ops_tx_object", path).
 			Int("_ops_tx_result_code", c.Writer.Status()).
 			Int("_ops_tx_body_bytes_sent", c.Writer.Size()).
+			Str("_ops_tx_scheme", c.Request.URL.Scheme).
+			Str("_http_x_forwarded_host", c.Request.Header.Get("X-Forwarded-Host")).
+			Str("_http_x_forwarded_for", c.Request.Header.Get("X-Forwarded-For")).
+			Str("_http_x_forwarded_port", c.Request.Header.Get("X-Forwarded-Port")).
+			Str("_http_x_forwarded_proto", c.Request.Header.Get("X-Forwarded-Proto")).
+			Str("_http_user_agent", c.Request.UserAgent()).
+			Str("_http_x_request_id", c.Request.Header.Get("X-Request-Id")).
+			Str("_http_x_amz_cf_id", c.Request.Header.Get("X-Amz-Cf-Id")).
+			Int64("_ops_tx_start", start.Unix()).
 			Dur("_opx_tx_duration", latency).
-			Logger()
-
-		switch {
-		case c.Writer.Status() >= http.StatusBadRequest && c.Writer.Status() < http.StatusInternalServerError:
-			l.Warn().Msg(msg)
-		case c.Writer.Status() >= http.StatusInternalServerError:
-			l.Error().Msg(msg)
-		default:
-			l.Info().Msg(msg)
-		}
-
+			Msg("tx")
 	}
 }
 
