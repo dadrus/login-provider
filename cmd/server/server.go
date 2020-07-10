@@ -35,14 +35,16 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.GET("/logout", handler.ShowLogoutPage(hf))
 	router.POST("/logout", handler.Logout(hf))
 
+	addr := configuredAddress()
+
 	if tlsConfig, err := getTlsConfig(); err == nil {
 		log.Info().
-			Msg("Listening and serving HTTPS")
-		router.RunTLS(configuredAddress(), tlsConfig.TlsCertFile, tlsConfig.TlsKeyFile)
+			Msg("Listening and serving HTTPS on " + addr)
+		router.RunTLS(addr, tlsConfig.TlsCertFile, tlsConfig.TlsKeyFile)
 	} else {
 		log.Info().
-			Msg("Listening and serving HTTP")
-		router.Run(configuredAddress())
+			Msg("Listening and serving HTTP on " + addr)
+		router.Run(addr)
 	}
 }
 
