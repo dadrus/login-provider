@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -11,14 +12,13 @@ import (
 func TestIfRequestIdIsPresentItIsExtended(t *testing.T) {
 	// GIVEN
 	requestId := "foo:bar"
-	ctx := gin.Context{
-		Request: &http.Request{ Header: make(http.Header)},
-	}
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = &http.Request{ Header: make(http.Header)}
 	ctx.Request.Header.Set(requestIdHeaderName, requestId)
 	middleware := RequestId()
 
 	// WHEN
-	middleware(&ctx)
+	middleware(ctx)
 
 	// THEN
 	val := ctx.Request.Header.Get(requestIdHeaderName)
@@ -36,13 +36,12 @@ func TestIfRequestIdIsPresentItIsExtended(t *testing.T) {
 
 func TestIfRequestIdIsNotPresentItIsAdded(t *testing.T) {
 	// GIVEN
-	ctx := gin.Context{
-		Request: &http.Request{ Header: make(http.Header)},
-	}
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = &http.Request{ Header: make(http.Header)}
 	middleware := RequestId()
 
 	// WHEN
-	middleware(&ctx)
+	middleware(ctx)
 
 	// THEN
 	val := ctx.Request.Header.Get(requestIdHeaderName)

@@ -4,21 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestIfCorrelationIdIsPresentItIsReused(t *testing.T) {
 	// GIVEN
 	correlationId := "foo"
-	ctx := gin.Context{
-		Request: &http.Request{ Header: make(http.Header)},
-		Writer:  &MockedResponseWriter{},
-	}
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = &http.Request{ Header: make(http.Header)}
 	ctx.Request.Header.Set(correlationIdHeaderName, correlationId)
 	middleware := CorrelationId()
 
 	// WHEN
-	middleware(&ctx)
+	middleware(ctx)
 
 	// THEN
 	val := ctx.Writer.Header().Get(correlationIdHeaderName)
@@ -28,14 +27,12 @@ func TestIfCorrelationIdIsPresentItIsReused(t *testing.T) {
 
 func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 	// GIVEN
-	ctx := gin.Context{
-		Request: &http.Request{ Header: make(http.Header)},
-		Writer:  &MockedResponseWriter{},
-	}
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = &http.Request{ Header: make(http.Header)}
 	middleware := CorrelationId()
 
 	// WHEN
-	middleware(&ctx)
+	middleware(ctx)
 
 	// THEN
 	reqVal := ctx.Request.Header.Get(correlationIdHeaderName)
@@ -45,5 +42,6 @@ func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 }
 
 func TestCorrelationIdMiddlewareCallsContextNext(t *testing.T) {
+	gin.CreateTestContext(httptest.NewRecorder())
 	// TODO: How to achieve that. gin.Context is a struct and as such not mockable
 }
