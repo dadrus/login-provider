@@ -7,7 +7,6 @@ import (
 	"github.com/ory/hydra-client-go/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"net/url"
 )
@@ -24,7 +23,7 @@ func NewClientFactory(adminUrl string) (*ClientFactory, error) {
 
 	factory := &ClientFactory{}
 
-	caFile := viper.GetString(config.TlsTrustStoreFile)
+	caFile := config.TlsTrustStore()
 	if caFile == "" {
 		log.Info().Msg("No explicit trust store configured. Falling back to a system-wide one")
 		// if a specific trust store is not specified, we'll rely on the system-wide trust store
@@ -43,7 +42,7 @@ func NewClientFactory(adminUrl string) (*ClientFactory, error) {
 		factory.transport = httptransport.NewWithClient(url.Host, url.Path, []string{url.Scheme}, tlsClient)
 	}
 
-	factory.transport.SetDebug(viper.GetString(config.LogLevel) == "debug")
+	factory.transport.SetDebug(config.LogLevel() == zerolog.DebugLevel)
 
 	return factory, nil
 }

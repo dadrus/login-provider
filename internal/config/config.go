@@ -57,7 +57,6 @@ func Address() string {
 type tlsConfig struct {
 	KeyFile  string
 	CertFile string
-	TrustStoreFile string
 }
 
 func TlsConfig() (*tlsConfig, error) {
@@ -77,19 +76,14 @@ func TlsConfig() (*tlsConfig, error) {
 		return nil, errors.New("configured TLS cert not available")
 	}
 
-	tlsTrustStoreFile := viper.GetString(tlsTrustStoreFile)
-	if len(tlsTrustStoreFile) != 0 {
-		if _, err := os.Stat(tlsTrustStoreFile); err != nil {
-			return nil, errors.New("configured TLS trust store not available")
-		}
-	}
-
-
 	return &tlsConfig{
 		KeyFile:  tlsKeyFile,
 		CertFile: tlsCertFile,
-		TrustStoreFile: tlsTrustStoreFile,
 	}, nil
+}
+
+func TlsTrustStore() string {
+	return viper.GetString(tlsTrustStoreFile)
 }
 
 func RegisterUrl() string  {
