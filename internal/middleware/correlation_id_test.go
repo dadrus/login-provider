@@ -57,6 +57,6 @@ func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 	require.Equal(t, reqVal, respVal, "Request and response correlation ids must be equal")
 }
 
-func TestMiddlewareCallsContextNext(t *testing.T) {
+func TestCorrelationIdMiddlewareCallsContextNext(t *testing.T) {
 	// TODO: How to achieve that. gin.Context is a struct and as such not mockable
 }
