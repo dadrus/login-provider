@@ -20,4 +20,7 @@ func RegisterRoutes(e *gin.Engine) {
 	e.POST("/consent", Consent(hf))
 	e.GET("/logout", ShowLogoutPage(hf))
 	e.POST("/logout", Logout(hf))
+
+	e.GET("/health/alive", Alive)
+	e.GET("/health/ready", Ready(hf))
 }
