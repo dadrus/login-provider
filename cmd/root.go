@@ -5,7 +5,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"login-provider/cmd/server"
 	"login-provider/internal/config"
 	"os"
@@ -22,7 +21,7 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(setConfigDefaults, readConfig, configureLogging)
+	cobra.OnInitialize(config.Load(cfgFile), configureLogging)
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
@@ -30,33 +29,6 @@ func init() {
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(-1)
-	}
-}
-
-func setConfigDefaults() {
-	viper.SetDefault(config.LogLevel, "info")
-	viper.SetDefault(config.Port, "8080")
-	viper.SetDefault(config.CookieSameSiteMode, "Lax")
-}
-
-// Reads config and environment variables if set
-func readConfig() {
-	if cfgFile != "" {
-		// enable ability to specify config file via flag
-		viper.SetConfigFile(cfgFile)
-	} else {
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("config")
-		viper.AddConfigPath(".")
-	}
-
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("No config file found.")
 		os.Exit(-1)
 	}
 }
@@ -71,21 +43,7 @@ func configureLogging() {
 	zerolog.MessageFieldName = "short_message"
 	zerolog.ErrorFieldName = "full_message"
 	zerolog.CallerFieldName = "_caller"
-
-	switch viper.GetString(config.LogLevel) {
-	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
-	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	}
+	zerolog.SetGlobalLevel(config.LogLevel())
 
 	hostname, err := os.Hostname()
 	if err != nil {

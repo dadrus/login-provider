@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -10,7 +9,6 @@ import (
 	"login-provider/internal/config"
 	"login-provider/internal/handler"
 	"login-provider/internal/hydra"
-	"os"
 	"time"
 )
 
@@ -23,7 +21,7 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
-	hf, err := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl))
+	hf, err := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl()))
 	if err != nil {
 		l := log.With().Err(err).Logger()
 		l.Fatal().Msg("Failed to create hydra client factory")
@@ -36,12 +34,12 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.GET("/logout", handler.ShowLogoutPage(hf))
 	router.POST("/logout", handler.Logout(hf))
 
-	addr := configuredAddress()
+	addr := config.Address()
 
-	if tlsConfig, err := getTlsConfig(); err == nil {
+	if tlsConfig, err := config.TlsConfig(); err == nil {
 		log.Info().
 			Msg("Listening and serving HTTPS on " + addr)
-		router.RunTLS(addr, tlsConfig.TlsCertFile, tlsConfig.TlsKeyFile)
+		router.RunTLS(addr, tlsConfig.CertFile, tlsConfig.KeyFile)
 	} else {
 		log.Info().
 			Msg("Listening and serving HTTP on " + addr)
@@ -117,36 +115,4 @@ func requestIdMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-type tlsConfig struct {
-	TlsKeyFile  string
-	TlsCertFile string
-}
-
-func getTlsConfig() (*tlsConfig, error) {
-	tlsKeyFile := viper.GetString(config.TlsKeyFile)
-	if len(tlsKeyFile) == 0 {
-		return nil, errors.New("no TLS key configured")
-	}
-	if _, err := os.Stat(tlsKeyFile); err != nil {
-		return nil, errors.New("configured TLS key not available")
-	}
-
-	tlsCertFile := viper.GetString(config.TlsCertFile)
-	if len(tlsCertFile) == 0 {
-		return nil, errors.New("no TLS cert configured")
-	}
-	if _, err := os.Stat(tlsCertFile); err != nil {
-		return nil, errors.New("configured TLS cert not available")
-	}
-
-	return &tlsConfig{
-		TlsKeyFile:  tlsKeyFile,
-		TlsCertFile: tlsCertFile,
-	}, nil
-}
-
-func configuredAddress() string {
-	return viper.GetString(config.Host) + ":" + viper.GetString(config.Port)
 }

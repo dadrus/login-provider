@@ -5,7 +5,6 @@ import (
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/ory/hydra-client-go/models"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"login-provider/internal/hydra"
 	"login-provider/internal/profile_api"
@@ -77,7 +76,7 @@ func ShowLoginPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 		c.HTML(http.StatusOK, "login.html", gin.H{
 			"title":        "Login",
 			"challenge":    loginChallenge,
-			"register_url": viper.GetString(config.RegisterUrl),
+			"register_url": config.RegisterUrl(),
 			"error":        errorMessage,
 		})
 	}
@@ -90,12 +89,12 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 		var loginData loginForm
 		if err := c.ShouldBind(&loginData); err != nil {
 			logger.Err(err).Msg("Failed to parse data from submitted login form")
-			c.HTML(http.StatusBadRequest, "login.html", gin.H{"title": "Login", "register_url": viper.GetString(config.RegisterUrl)})
+			c.HTML(http.StatusBadRequest, "login.html", gin.H{"title": "Login", "register_url": config.RegisterUrl()})
 			return
 		}
 
 		client := hf.NewClient(c)
-		authResponse, err := profile_api.AuthenticateUser(viper.GetString(config.AuthenticateUrl), loginData.Email, loginData.Password)
+		authResponse, err := profile_api.AuthenticateUser(config.AuthenticateUrl(), loginData.Email, loginData.Password)
 		if err != nil {
 			l := logger.With().Err(err).Logger()
 			l.Warn().Msg("User authentication failed")
@@ -124,7 +123,7 @@ func Login(hf *hydra.ClientFactory) gin.HandlerFunc {
 			// So we have to redirect to "something went wrong page - please contact the admin"
 			c.HTML(http.StatusBadRequest,
 				"login.html",
-				gin.H{"title": "Login", "error": "Login failed", "register_url": viper.GetString(config.RegisterUrl)})
+				gin.H{"title": "Login", "error": "Login failed", "register_url": config.RegisterUrl()})
 			return
 		}
 

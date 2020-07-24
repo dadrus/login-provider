@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"net/http"
 )
@@ -10,5 +9,5 @@ import (
 func HandleBadRequest(c *gin.Context) {
 	c.HTML(http.StatusBadRequest,
 		"login.html",
-		gin.H{"title": "Login", "register_url": viper.GetString(config.RegisterUrl)})
+		gin.H{"title": "Login", "register_url": config.RegisterUrl()})
 }
