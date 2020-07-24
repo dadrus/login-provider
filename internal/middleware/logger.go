@@ -41,7 +41,6 @@ func Logger() gin.HandlerFunc {
 			Str("_http_x_forwarded_port", c.Request.Header.Get("X-Forwarded-Port")).
 			Str("_http_x_forwarded_proto", c.Request.Header.Get("X-Forwarded-Proto")).
 			Str("_http_user_agent", c.Request.UserAgent()).
-			Str("_http_x_request_id", c.Request.Header.Get("X-Request-Id")).
 			Str("_http_x_amz_cf_id", c.Request.Header.Get("X-Amz-Cf-Id")).
 			Int64("_ops_tx_start", start.Unix()).
 			Dur("_opx_tx_duration", latency).
