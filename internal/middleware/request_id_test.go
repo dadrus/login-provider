@@ -56,6 +56,3 @@ func TestIfRequestIdIsNotPresentItIsAdded(t *testing.T) {
 	require.NotEmpty(t, setReqId[1], "Second part of the set X-Request-Id component must not be empty")
 }
 
-func TestRequestIdMiddlewareCallsContextNext(t *testing.T) {
-	// TODO: How to achieve that. gin.Context is a struct and as such not mockable
-}

@@ -40,8 +40,3 @@ func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 	require.NotEmpty(t, reqVal, "Correlation-Id header must not be empty")
 	require.Equal(t, reqVal, respVal, "Request and response correlation ids must be equal")
 }
-
-func TestCorrelationIdMiddlewareCallsContextNext(t *testing.T) {
-	gin.CreateTestContext(httptest.NewRecorder())
-	// TODO: How to achieve that. gin.Context is a struct and as such not mockable
-}
