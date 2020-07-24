@@ -9,7 +9,7 @@ const requestIdHeaderName = "X-Request-Id"
 
 func RequestId() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		gotRequestId := c.Request.Header.Get("X-Request-Id")
+		gotRequestId := c.Request.Header.Get(requestIdHeaderName)
 		requestId := "login-provider:" + uuid.New().String()
 		if len(gotRequestId) != 0 {
 			requestId = gotRequestId + ";" + requestId
