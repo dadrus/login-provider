@@ -5,16 +5,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const headerName = "Correlation-Id"
+
 func CorrelationId() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		correlationId := c.Request.Header.Get("Correlation-Id")
+		correlationId := c.Request.Header.Get(headerName)
 		if correlationId == "" {
 			correlationId = uuid.New().String()
-			c.Request.Header.Set("Correlation-Id", correlationId)
+			c.Request.Header.Set(headerName, correlationId)
 		}
 
 		c.Next()
 
-		c.Writer.Header().Set("Correlation-Id", correlationId)
+		c.Writer.Header().Set(headerName, correlationId)
 	}
 }
