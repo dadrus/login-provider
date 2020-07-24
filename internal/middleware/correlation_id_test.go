@@ -27,14 +27,14 @@ func TestIfCorrelationIdIsPresentItIsReused(t *testing.T) {
 		Request: &http.Request{ Header: make(http.Header)},
 		Writer:  &MockedResponseWriter{},
 	}
-	ctx.Request.Header.Set(headerName, correlationId)
+	ctx.Request.Header.Set(correlationIdHeaderName, correlationId)
 	middleware := CorrelationId()
 
 	// WHEN
 	middleware(&ctx)
 
 	// THEN
-	val := ctx.Writer.Header().Get(headerName)
+	val := ctx.Writer.Header().Get(correlationIdHeaderName)
 	require.NotEmpty(t, val, "Correlation-Id header must not be empty")
 	require.Equal(t, correlationId, val, "Set and received correlation ids must be equal")
 }
@@ -51,8 +51,8 @@ func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 	middleware(&ctx)
 
 	// THEN
-	reqVal := ctx.Request.Header.Get(headerName)
-	respVal := ctx.Writer.Header().Get(headerName)
+	reqVal := ctx.Request.Header.Get(correlationIdHeaderName)
+	respVal := ctx.Writer.Header().Get(correlationIdHeaderName)
 	require.NotEmpty(t, reqVal, "Correlation-Id header must not be empty")
 	require.Equal(t, reqVal, respVal, "Request and response correlation ids must be equal")
 }
