@@ -51,8 +51,8 @@ func TestIfCorrelationIdIsNotPresentItIsCreated(t *testing.T) {
 	middleware(&ctx)
 
 	// THEN
-	reqVal := ctx.Writer.Header().Get(headerName)
-	respVal := ctx.Request.Header.Get(headerName)
+	reqVal := ctx.Request.Header.Get(headerName)
+	respVal := ctx.Writer.Header().Get(headerName)
 	require.NotEmpty(t, reqVal, "Correlation-Id header must not be empty")
 	require.Equal(t, reqVal, respVal, "Request and response correlation ids must be equal")
 }
