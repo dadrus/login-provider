@@ -25,11 +25,11 @@ const (
 )
 
 // Loads and reads the config and environment variables if set
-func Load(file string) func() {
+func Load(file *string) func() {
 	return func() {
-		if file != "" {
+		if *file != "" {
 			// enable ability to specify config file via flag
-			viper.SetConfigFile(file)
+			viper.SetConfigFile(*file)
 		} else {
 			viper.SetConfigType("yaml")
 			viper.SetConfigName("config")

@@ -9,8 +9,6 @@ import (
 	"os"
 )
 
-var cfgFile string
-
 var RootCmd = &cobra.Command{
 	Use:   "login-provider",
 	Short: "Hydra login provider",
@@ -19,9 +17,11 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(config.Load(cfgFile), logging.ConfigureLogging)
+	var cfgFile string
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
+
+	cobra.OnInitialize(config.Load(&cfgFile), logging.ConfigureLogging)
 }
 
 func Execute() {

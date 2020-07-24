@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"login-provider/internal/config"
 	"login-provider/internal/handler"
 	"login-provider/internal/hydra"
@@ -21,7 +20,7 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.LoadHTMLGlob("web/templates/*")
 
 	// TODO: refactor this part and move it closer to the handler functions
-	hf, err := hydra.NewClientFactory(viper.GetString(config.HydraAdminUrl()))
+	hf, err := hydra.NewClientFactory(config.HydraAdminUrl())
 	if err != nil {
 		l := log.With().Err(err).Logger()
 		l.Fatal().Msg("Failed to create hydra client factory")
