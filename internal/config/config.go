@@ -45,26 +45,18 @@ type TlsConfig struct {
 // Loads and reads the config and environment variables if set
 func Load(file *string) func() {
 	return func() {
-		if *file != "" {
-			// enable ability to specify config file via flag
-			viper.SetConfigFile(*file)
-		} else {
-			viper.SetConfigType("yaml")
-			viper.SetConfigName("config")
-			viper.AddConfigPath(".")
-		}
-
 		viper.SetDefault(logLevel, "info")
 		viper.SetDefault(port, "8080")
 		viper.SetDefault(host, "127.0.0.1")
 
 		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-		viper.AutomaticEnv() // read in environment variables that match
+		viper.AutomaticEnv()
 
-		// If a config file is found, read it in.
-		if err := viper.ReadInConfig(); err != nil {
-			fmt.Println("No config file found.")
-			os.Exit(-1)
+		if *file != "" {
+			viper.SetConfigFile(*file)
+			if err := viper.ReadInConfig(); err != nil {
+				fmt.Printf(`Config file not found because "%s"\n`, err)
+			}
 		}
 	}
 }
