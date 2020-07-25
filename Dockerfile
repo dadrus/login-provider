@@ -2,6 +2,8 @@
 FROM golang:1.14-buster as builder
 LABEL maintainer=dimitrij.drus@innoq.com
 
+ARG VERSION="unknown"
+
 RUN apt-get update && apt-get install -y xz-utils
 
 # UPX is GPL
@@ -26,7 +28,7 @@ WORKDIR /go/src/login-provider
 
 ADD . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s"
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X login-provider/cmd.Version=${VERSION}"
 RUN strip --strip-unneeded login-provider
 RUN upx login-provider
 
