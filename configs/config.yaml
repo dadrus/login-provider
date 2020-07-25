@@ -18,6 +18,13 @@ tls:
   # Configures the trust store (CA certificates to trust)
   #trust_store: ./ca_chain.pem
 
+# Where the root home document is located to resolve required dependencies
+# to the hydra admin service, the registration service and the authentication service
+root_home_url: https://127.0.0.1:8092
+
+# The following config entries will be removed as soon as usage of root home documents
+# is supported
+
 # Where the hydra admin service is located
 hydra_admin_url: https://127.0.0.1:4445
 
