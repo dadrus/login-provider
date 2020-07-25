@@ -23,8 +23,7 @@ func NewClientFactory(conf config.Configuration) (*ClientFactory, error) {
 
 	factory := &ClientFactory{}
 
-	caFile := conf.TlsTrustStore()
-	if caFile == "" {
+	if caFile, err := conf.TlsTrustStore(); err != nil {
 		log.Info().Msg("No explicit trust store configured. Falling back to a system-wide one")
 		// if a specific trust store is not specified, we'll rely on the system-wide trust store
 		factory.transport = httptransport.New(url.Host, url.Path, []string{url.Scheme})

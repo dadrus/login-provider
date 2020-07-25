@@ -26,10 +26,11 @@ const (
 	port = "port"
 )
 
-type Configuration interface {
+type Configurat	ion interface {
+	// TODO: update methods returning Urls to return URL type and error
 	Address() string
 	TlsConfig() (*TlsConfig, error)
-	TlsTrustStore() string
+	TlsTrustStore() (string, error)
 	RegisterUrl() string
 	AuthenticateUrl() string
 	HydraAdminUrl() string
@@ -101,8 +102,15 @@ func (c *configuration) TlsConfig() (*TlsConfig, error) {
 	}, nil
 }
 
-func (c *configuration) TlsTrustStore() string {
-	return viper.GetString(tlsTrustStoreFile)
+func (c *configuration) TlsTrustStore() (string, error) {
+	value := viper.GetString(tlsTrustStoreFile)
+	if len(value) == 0 {
+		return "", errors.New("no TLS key configured")
+	}
+	if _, err := os.Stat(value); err != nil {
+		return "", errors.New("configured TLS key not available")
+	}
+	return value, nil
 }
 
 func (c *configuration) RegisterUrl() string  {

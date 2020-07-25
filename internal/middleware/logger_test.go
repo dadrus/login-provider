@@ -41,8 +41,8 @@ func (c *MockConfiguration) LogLevel() zerolog.Level  {
 	return zerolog.InfoLevel
 }
 
-func (c *MockConfiguration) TlsTrustStore() string {
-	return ""
+func (c *MockConfiguration) TlsTrustStore() (string, error) {
+	return "", nil
 }
 
 func (c *MockConfiguration) RegisterUrl() string  {
