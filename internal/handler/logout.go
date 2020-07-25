@@ -25,7 +25,7 @@ func ShowLogoutPage(h *hydra.ClientFactory, conf config.Configuration) gin.Handl
 			return
 		}
 
-		client := h.NewClient(c)
+		client := h.NewClient(c.Request.Context())
 		_, err := client.Admin.GetLogoutRequest(admin.NewGetLogoutRequestParams().
 			WithLogoutChallenge(logoutChallenge))
 		if err != nil {
@@ -54,7 +54,7 @@ func Logout(hf *hydra.ClientFactory, _ config.Configuration) gin.HandlerFunc {
 			return
 		}
 
-		client := hf.NewClient(c)
+		client := hf.NewClient(c.Request.Context())
 
 		if !logoutData.LogoutApproved {
 			_, err := client.Admin.RejectLogoutRequest(admin.NewRejectLogoutRequestParams().

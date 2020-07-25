@@ -32,7 +32,7 @@ func ShowConsentPage(hf *hydra.ClientFactory, conf config.Configuration) gin.Han
 			return
 		}
 
-		client := hf.NewClient(c)
+		client := hf.NewClient(c.Request.Context())
 
 		response, err := client.Admin.GetConsentRequest(admin.NewGetConsentRequestParams().
 			WithConsentChallenge(consentChallenge))
@@ -106,7 +106,7 @@ func Consent(hf *hydra.ClientFactory, _ config.Configuration) gin.HandlerFunc {
 			return
 		}
 
-		client := hf.NewClient(c)
+		client := hf.NewClient(c.Request.Context())
 
 		if !consentData.ConsentApproved {
 			response, err := client.Admin.RejectConsentRequest(admin.NewRejectConsentRequestParams().

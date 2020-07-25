@@ -1,8 +1,8 @@
 package hydra
 
 import (
+	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/ory/hydra-client-go/client"
 	"github.com/rs/zerolog"
@@ -46,17 +46,17 @@ func NewClientFactory(conf config.Configuration) (*ClientFactory, error) {
 	return factory, nil
 }
 
-func (cf *ClientFactory) NewClient(c *gin.Context) *client.OryHydra {
-	logger := log.Ctx(c.Request.Context())
-	cf.transport.SetLogger(ZeroLogLogger{logger})
+func (cf *ClientFactory) NewClient(ctx context.Context) *client.OryHydra {
+	logger := log.Ctx(ctx)
+	cf.transport.SetLogger(zeroLogLogger{logger})
 	return client.New(cf.transport, nil)
 }
 
-type ZeroLogLogger struct{
+type zeroLogLogger struct{
 	logger *zerolog.Logger
 }
 
-func (l ZeroLogLogger) Printf(format string, args ...interface{}) {
+func (l zeroLogLogger) Printf(format string, args ...interface{}) {
 	if len(format) == 0 || format[len(format)-1] != '\n' {
 		format += "\n"
 	}
@@ -64,7 +64,7 @@ func (l ZeroLogLogger) Printf(format string, args ...interface{}) {
 	l.logger.Info().Msg(fmt.Sprintf(format, args))
 }
 
-func (l ZeroLogLogger) Debugf(format string, args ...interface{}) {
+func (l zeroLogLogger) Debugf(format string, args ...interface{}) {
 	if len(format) == 0 || format[len(format)-1] != '\n' {
 		format += "\n"
 	}

@@ -38,7 +38,7 @@ func ShowLoginPage(hf *hydra.ClientFactory, conf config.Configuration) gin.Handl
 
 		errorMessage := c.Query("error")
 
-		client := hf.NewClient(c)
+		client := hf.NewClient(c.Request.Context())
 		// get info about the login request for the given challenge
 		response, err := client.Admin.GetLoginRequest(admin.NewGetLoginRequestParams().
 			WithLoginChallenge(loginChallenge))
@@ -93,7 +93,7 @@ func Login(hf *hydra.ClientFactory, conf config.Configuration) gin.HandlerFunc {
 			return
 		}
 
-		client := hf.NewClient(c)
+		client := hf.NewClient(c.Request.Context())
 		authResponse, err := profile_api.AuthenticateUser(conf.AuthenticateUrl(), loginData.Email, loginData.Password)
 		if err != nil {
 			l := logger.With().Err(err).Logger()
