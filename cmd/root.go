@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 	"login-provider/cmd/server"
 	"login-provider/internal/config"
-	"login-provider/internal/logging"
 	"os"
 )
 
@@ -21,7 +20,7 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 
-	cobra.OnInitialize(config.Load(&cfgFile), logging.ConfigureLogging)
+	cobra.OnInitialize(config.Load(&cfgFile))
 }
 
 func Execute() {

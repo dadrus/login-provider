@@ -6,10 +6,14 @@ import (
 	"github.com/spf13/cobra"
 	"login-provider/internal/config"
 	"login-provider/internal/handler"
+	"login-provider/internal/logging"
 	"login-provider/internal/middleware"
 )
 
 func Serve(cmd *cobra.Command, args []string) {
+	conf := config.NewConfiguration()
+	logging.ConfigureLogging(conf)
+
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(middleware.CorrelationId())
@@ -17,10 +21,10 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.Use(middleware.Logger())
 	router.LoadHTMLGlob("web/templates/*")
 
-	handler.RegisterRoutes(router)
+	handler.RegisterRoutes(router, conf)
 
-	addr := config.Address()
-	if tlsConfig, err := config.TlsConfig(); err == nil {
+	addr := conf.Address()
+	if tlsConfig, err := conf.TlsConfig(); err == nil {
 		log.Info().
 			Msg("Listening and serving HTTPS on " + addr)
 		router.RunTLS(addr, tlsConfig.CertFile, tlsConfig.KeyFile)

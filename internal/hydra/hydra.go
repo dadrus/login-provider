@@ -15,15 +15,15 @@ type ClientFactory struct {
 	transport *httptransport.Runtime
 }
 
-func NewClientFactory(adminUrl string) (*ClientFactory, error) {
-	url, err := url.Parse(adminUrl)
+func NewClientFactory(conf config.Configuration) (*ClientFactory, error) {
+	url, err := url.Parse(conf.HydraAdminUrl())
 	if err != nil {
 		return nil, err
 	}
 
 	factory := &ClientFactory{}
 
-	caFile := config.TlsTrustStore()
+	caFile := conf.TlsTrustStore()
 	if caFile == "" {
 		log.Info().Msg("No explicit trust store configured. Falling back to a system-wide one")
 		// if a specific trust store is not specified, we'll rely on the system-wide trust store
@@ -42,7 +42,7 @@ func NewClientFactory(adminUrl string) (*ClientFactory, error) {
 		factory.transport = httptransport.NewWithClient(url.Host, url.Path, []string{url.Scheme}, tlsClient)
 	}
 
-	factory.transport.SetDebug(config.LogLevel() == zerolog.DebugLevel)
+	factory.transport.SetDebug(conf.LogLevel() == zerolog.DebugLevel)
 
 	return factory, nil
 }

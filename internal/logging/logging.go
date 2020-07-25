@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func ConfigureLogging() {
+func ConfigureLogging(conf config.Configuration) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.TimestampFieldName = "timestamp"
 	zerolog.LevelFieldName = "_level_name"
@@ -19,7 +19,7 @@ func ConfigureLogging() {
 	zerolog.MessageFieldName = "short_message"
 	zerolog.ErrorFieldName = "full_message"
 	zerolog.CallerFieldName = "_caller"
-	zerolog.SetGlobalLevel(config.LogLevel())
+	zerolog.SetGlobalLevel(conf.LogLevel())
 
 	hostname, err := os.Hostname()
 	if err != nil {

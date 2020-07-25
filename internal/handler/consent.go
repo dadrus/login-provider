@@ -6,6 +6,7 @@ import (
 	"github.com/ory/hydra-client-go/models"
 	"github.com/rs/zerolog/log"
 	"login-provider/internal/client_meta"
+	"login-provider/internal/config"
 	"login-provider/internal/hydra"
 	"login-provider/internal/profile_api"
 	"net/http"
@@ -19,7 +20,7 @@ type consentForm struct {
 	ConsentApproved bool     `form:"consent_approved"`
 }
 
-func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
+func ShowConsentPage(hf *hydra.ClientFactory, conf config.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logger := log.Ctx(c.Request.Context())
 
@@ -27,7 +28,7 @@ func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 		// the challenge is used to fetch information about consent requests in hydra
 		if consentChallenge = c.Query("consent_challenge"); len(consentChallenge) == 0 {
 			logger.Warn().Msg("No consent challenge provided")
-			HandleBadRequest(c)
+			HandleBadRequest(c, conf)
 			return
 		}
 
@@ -94,7 +95,7 @@ func ShowConsentPage(hf *hydra.ClientFactory) gin.HandlerFunc {
 	}
 }
 
-func Consent(hf *hydra.ClientFactory) gin.HandlerFunc {
+func Consent(hf *hydra.ClientFactory, _ config.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logger := log.Ctx(c.Request.Context())
 

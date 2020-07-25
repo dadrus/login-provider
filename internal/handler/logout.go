@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/rs/zerolog/log"
+	"login-provider/internal/config"
 	"login-provider/internal/hydra"
 	"net/http"
 )
@@ -13,14 +14,14 @@ type logoutForm struct {
 	LogoutApproved bool   `form:"logout_approved"`
 }
 
-func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
+func ShowLogoutPage(h *hydra.ClientFactory, conf config.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logger := log.Ctx(c.Request.Context())
 
 		var logoutChallenge string
 		// the challenge is used to fetch information about consent requests in hydra
 		if logoutChallenge = c.Query("logout_challenge"); len(logoutChallenge) == 0 {
-			HandleBadRequest(c)
+			HandleBadRequest(c, conf)
 			return
 		}
 
@@ -42,7 +43,7 @@ func ShowLogoutPage(h *hydra.ClientFactory) gin.HandlerFunc {
 	}
 }
 
-func Logout(hf *hydra.ClientFactory) gin.HandlerFunc {
+func Logout(hf *hydra.ClientFactory, _ config.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logger := log.Ctx(c.Request.Context())
 

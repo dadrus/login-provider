@@ -10,9 +10,11 @@ import (
 )
 
 const (
+	// TODO: use home documents to retrieve the following three values using the forth one
 	registerUrl     = "register_url"
 	authenticateUrl = "authenticate_url"
 	hydraAdminUrl   = "hydra_admin_url"
+	rootHomeUrl = "root_home_url"
 
 	tlsKeyFile = "tls.key"
 	tlsCertFile = "tls.cert"
@@ -23,6 +25,28 @@ const (
 	host = "host"
 	port = "port"
 )
+
+type Configuration interface {
+	Address() string
+	TlsConfig() (*tlsConfig, error)
+	TlsTrustStore() string
+	RegisterUrl() string
+	AuthenticateUrl() string
+	HydraAdminUrl() string
+	LogLevel() zerolog.Level
+}
+
+type tlsConfig struct {
+	KeyFile  string
+	CertFile string
+}
+
+type viperConfiguration struct {
+}
+
+func NewConfiguration() Configuration {
+	return &viperConfiguration{}
+}
 
 // Loads and reads the config and environment variables if set
 func Load(file *string) func() {
@@ -50,16 +74,11 @@ func Load(file *string) func() {
 	}
 }
 
-func Address() string {
+func (c *viperConfiguration) Address() string {
 	return viper.GetString(host) + ":" + viper.GetString(port)
 }
 
-type tlsConfig struct {
-	KeyFile  string
-	CertFile string
-}
-
-func TlsConfig() (*tlsConfig, error) {
+func (c *viperConfiguration) TlsConfig() (*tlsConfig, error) {
 	tlsKeyFile := viper.GetString(tlsKeyFile)
 	if len(tlsKeyFile) == 0 {
 		return nil, errors.New("no TLS key configured")
@@ -82,23 +101,23 @@ func TlsConfig() (*tlsConfig, error) {
 	}, nil
 }
 
-func TlsTrustStore() string {
+func (c *viperConfiguration) TlsTrustStore() string {
 	return viper.GetString(tlsTrustStoreFile)
 }
 
-func RegisterUrl() string  {
+func (c *viperConfiguration) RegisterUrl() string  {
 	return viper.GetString(registerUrl)
 }
 
-func HydraAdminUrl() string  {
+func (c viperConfiguration) HydraAdminUrl() string  {
 	return viper.GetString(hydraAdminUrl)
 }
 
-func AuthenticateUrl() string  {
+func (c *viperConfiguration) AuthenticateUrl() string  {
 	return viper.GetString(authenticateUrl)
 }
 
-func LogLevel() zerolog.Level  {
+func (c *viperConfiguration) LogLevel() zerolog.Level  {
 	switch viper.GetString(logLevel) {
 	case "panic":
 		return zerolog.PanicLevel

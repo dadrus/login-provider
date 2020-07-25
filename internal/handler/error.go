@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func HandleBadRequest(c *gin.Context) {
+func HandleBadRequest(c *gin.Context, conf config.Configuration) {
 	c.HTML(http.StatusBadRequest,
 		"login.html",
-		gin.H{"title": "Login", "register_url": config.RegisterUrl()})
+		gin.H{"title": "Login", "register_url": conf.RegisterUrl()})
 }
