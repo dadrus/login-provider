@@ -26,7 +26,7 @@ const (
 	port = "port"
 )
 
-type Configurat	ion interface {
+type Configuration interface {
 	// TODO: update methods returning Urls to return URL type and error
 	Address() string
 	TlsConfig() (*TlsConfig, error)
