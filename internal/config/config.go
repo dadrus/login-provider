@@ -28,7 +28,7 @@ const (
 
 type Configuration interface {
 	Address() string
-	TlsConfig() (*tlsConfig, error)
+	TlsConfig() (*TlsConfig, error)
 	TlsTrustStore() string
 	RegisterUrl() string
 	AuthenticateUrl() string
@@ -36,16 +36,9 @@ type Configuration interface {
 	LogLevel() zerolog.Level
 }
 
-type tlsConfig struct {
+type TlsConfig struct {
 	KeyFile  string
 	CertFile string
-}
-
-type viperConfiguration struct {
-}
-
-func NewConfiguration() Configuration {
-	return &viperConfiguration{}
 }
 
 // Loads and reads the config and environment variables if set
@@ -62,6 +55,7 @@ func Load(file *string) func() {
 
 		viper.SetDefault(logLevel, "info")
 		viper.SetDefault(port, "8080")
+		viper.SetDefault(host, "127.0.0.1")
 
 		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		viper.AutomaticEnv() // read in environment variables that match
@@ -74,11 +68,17 @@ func Load(file *string) func() {
 	}
 }
 
-func (c *viperConfiguration) Address() string {
+type configuration struct {}
+
+func NewConfiguration() Configuration {
+	return &configuration{}
+}
+
+func (c *configuration) Address() string {
 	return viper.GetString(host) + ":" + viper.GetString(port)
 }
 
-func (c *viperConfiguration) TlsConfig() (*tlsConfig, error) {
+func (c *configuration) TlsConfig() (*TlsConfig, error) {
 	tlsKeyFile := viper.GetString(tlsKeyFile)
 	if len(tlsKeyFile) == 0 {
 		return nil, errors.New("no TLS key configured")
@@ -95,29 +95,29 @@ func (c *viperConfiguration) TlsConfig() (*tlsConfig, error) {
 		return nil, errors.New("configured TLS cert not available")
 	}
 
-	return &tlsConfig{
+	return &TlsConfig{
 		KeyFile:  tlsKeyFile,
 		CertFile: tlsCertFile,
 	}, nil
 }
 
-func (c *viperConfiguration) TlsTrustStore() string {
+func (c *configuration) TlsTrustStore() string {
 	return viper.GetString(tlsTrustStoreFile)
 }
 
-func (c *viperConfiguration) RegisterUrl() string  {
+func (c *configuration) RegisterUrl() string  {
 	return viper.GetString(registerUrl)
 }
 
-func (c viperConfiguration) HydraAdminUrl() string  {
+func (c *configuration) HydraAdminUrl() string  {
 	return viper.GetString(hydraAdminUrl)
 }
 
-func (c *viperConfiguration) AuthenticateUrl() string  {
+func (c *configuration) AuthenticateUrl() string  {
 	return viper.GetString(authenticateUrl)
 }
 
-func (c *viperConfiguration) LogLevel() zerolog.Level  {
+func (c *configuration) LogLevel() zerolog.Level  {
 	switch viper.GetString(logLevel) {
 	case "panic":
 		return zerolog.PanicLevel
