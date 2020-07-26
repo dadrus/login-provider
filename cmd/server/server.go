@@ -8,6 +8,8 @@ import (
 	"login-provider/internal/handler"
 	"login-provider/internal/logging"
 	"login-provider/internal/middleware"
+	"os"
+	"strings"
 )
 
 func Serve(cmd *cobra.Command, args []string) {
@@ -19,7 +21,12 @@ func Serve(cmd *cobra.Command, args []string) {
 	router.Use(middleware.CorrelationId())
 	router.Use(middleware.RequestId())
 	router.Use(middleware.Logger())
-	router.LoadHTMLGlob("web/templates/*")
+	if strings.HasSuffix(os.Getenv("PWD"), "cmd") {
+		// because of root_test.go
+		router.LoadHTMLGlob("../web/templates/*")
+	} else {
+		router.LoadHTMLGlob("web/templates/*")
+	}
 
 	handler.RegisterRoutes(router, conf)
 

@@ -1,9 +1,10 @@
-package cmd
+package cmd_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"login-provider/cmd"
 	"net"
 	"net/http"
 	"os"
@@ -41,17 +42,10 @@ func freePort() int {
 	return 0
 }
 
-var port int
-
-func init() {
-	port = freePort()
-	os.Setenv("PORT", fmt.Sprintf("%d", port))
-}
-
-func waitForServiceToStart(t *testing.T) bool {
+func waitForServiceToStart(t *testing.T, port int) bool {
 	client := &http.Client{}
 
-	url := fmt.Sprintf("https://127.0.0.1:%d%s", port, "/health/alive")
+	url := fmt.Sprintf("http://127.0.0.1:%d%s", port, "/health/alive")
 
 	if resp, err := client.Get(url); err != nil {
 		t.Logf("HTTP request to %s failed: %s", url, err)
@@ -66,29 +60,51 @@ func waitForServiceToStart(t *testing.T) bool {
 	return false
 }
 
-func TestVersion(t *testing.T) {
-	RootCmd.SetArgs([]string{"--version"})
-
-	// TODO: Get the output printed to stdout and check it?
-	err := RootCmd.Execute()
-	require.NoError(t, err)
+type stringWriter struct {
+	value string
 }
 
-// Disabled for now
-// This tests runs in a panic: html/template: pattern matches no files: `web/templates/*`
-// TODO: Fix this test
-func testStartService(t *testing.T) {
+// The only function required by the io.Writer interface.  Will append
+// written data to the String.value string.
+func (s *stringWriter) Write(p []byte) (n int, err error) {
+	s.value += string(p)
+	return len(p), nil
+}
+
+func TestStartService(t *testing.T) {
+	// GIVEN
+	cmd.RootCmd.SetOut(os.Stdout)
+	port := freePort()
+	os.Setenv("PORT", fmt.Sprintf("%d", port))
+
+	// WHEN
 	go func() {
-		assert.Nil(t, RootCmd.Execute())
+		assert.Nil(t, cmd.RootCmd.Execute())
 	}()
 
+	// THEN
+	// service shall be up and running
 	var count = 1
-	for waitForServiceToStart(t) {
+	for waitForServiceToStart(t, port) {
 		t.Logf("Ports are not yet open, retrying attempt #%d...", count)
 		count++
-		if count > 15 {
+		if count > 5 {
 			t.FailNow()
 		}
 		time.Sleep(time.Second)
 	}
+}
+
+func TestVersion(t *testing.T) {
+	// GIVEN
+	cmd.RootCmd.SetArgs([]string{"--version"})
+	w := &stringWriter{}
+	cmd.RootCmd.SetOut(w)
+
+	// WHEN
+	err := cmd.RootCmd.Execute()
+
+	// THEN
+	require.NoError(t, err)
+	require.Contains(t, w.value, "version master", "Default version must be master")
 }
