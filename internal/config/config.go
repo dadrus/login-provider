@@ -47,7 +47,6 @@ func Load(file *string) func() {
 	return func() {
 		viper.SetDefault(logLevel, "info")
 		viper.SetDefault(port, "8080")
-		viper.SetDefault(host, "127.0.0.1")
 
 		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		viper.AutomaticEnv()
